@@ -1,8 +1,23 @@
-name: hello-world
-on: push
+name: run-local-gitleaks
+
+on:
+  push:
+    branches:
+      - main
+
 jobs:
-  my-job:
+  build:
     runs-on: self-hosted
+
     steps:
-      - name: my-step
-        run: echo "Hello World!"
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Run Custom Binary
+        run: |
+          # The binary 'mytool' is in the PATH and can be executed directly
+          gitleaks detect
+
+      - name: Ignore Exit Code of mytool
+        continue-on-error: true
+        run: exit 0
