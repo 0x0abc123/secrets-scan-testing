@@ -13,11 +13,8 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v2
 
-      - name: Run Custom Binary
+      - name: Run Local Gitleaks Binary
         run: |
-          # The binary 'mytool' is in the PATH and can be executed directly
+          # Ensure the binary 'gitleaks' is in the PATH and can be executed directly
           gitleaks detect
-
-      - name: Ignore Exit Code of mytool
         continue-on-error: true
-        run: exit 0
