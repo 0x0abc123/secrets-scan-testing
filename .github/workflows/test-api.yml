@@ -21,6 +21,7 @@ jobs:
           jq '[ .artifacts[] | select(.name == "gitleaks-output")]' /tmp/artifacts.json > /tmp/gitleaks-af.json
           LAST_A=$(jq '.[].created_at' /tmp/gitleaks-af.json | sort -rV | head -n 1)
           A_URL=$(jq '.artifacts[] | select(.created_at == '${LAST_A}') | .archive_download_url' /tmp/artifacts.json)
+          echo $LAST_A $A_URL
           curl -L -o /tmp/last-gitleaks-output.zip \
           -H "Accept: application/vnd.github+json" \
           -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
