@@ -37,9 +37,12 @@ jobs:
           https://api.github.com/repos/${{ github.repository }}/actions/artifacts
           cat $PREV_ARTIFACTS
           jq '[ .artifacts[] | select(.name == "$ARTIFACT_NAME")]' $PREV_ARTIFACTS > $GITLEAKS_ARTIFACTS
+          cat $GITLEAKS_ARTIFACTS
           LAST_A=$(jq '.[].created_at' $GITLEAKS_ARTIFACTS | sort -rV | head -n 1)
+          echo $LAST_A
           if [ -z $LAST_A ] ; then exit 0 ; fi
           A_URL=$(jq '.artifacts[] | select(.created_at == '${LAST_A}') | .archive_download_url' $PREV_ARTIFACTS | tr -d '"')
+          echo $A_URL
           if [ -z $A_URL ] ; then exit 0 ; fi
           echo "fetching last gitleaks results:" $LAST_A $A_URL
           curl -L -o $LAST_ARTIFACT_ZIP \
