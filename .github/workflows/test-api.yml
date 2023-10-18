@@ -6,7 +6,7 @@ on:
 jobs:
   build:
     runs-on: self-hosted
-steps:
+    steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
       - name: Test API
@@ -26,4 +26,4 @@ steps:
 #        with:
 #          name: gitleaks-output
 #          path: /tmp/output.json
-          artifact_name: gitleaks-output
+#          artifact_name: gitleaks-output
