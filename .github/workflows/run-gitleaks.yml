@@ -19,6 +19,8 @@ jobs:
           TMPSARIF=$(mktemp).sarif
           gitleaks detect -f sarif -r $TMPSARIF
           jq .runs[0].results $TMPSARIF > $ARTIFACT_PATH
+          ls -alh $ARTIFACT_PATH
+          cat $ARTIFACT_PATH
         continue-on-error: true
 
       - name: Compare Previous Gitleaks Results
@@ -32,6 +34,7 @@ jobs:
           -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
           -H "X-GitHub-Api-Version: 2022-11-28" \
           https://api.github.com/repos/${{ github.repository }}/actions/artifacts
+          cat $PREV_ARTIFACTS
           jq '[ .artifacts[] | select(.name == "$ARTIFACT_NAME")]' $PREV_ARTIFACTS > $GITLEAKS_ARTIFACTS
           LAST_A=$(jq '.[].created_at' $GITLEAKS_ARTIFACTS | sort -rV | head -n 1)
           if [ -z $LAST_A ] ; then exit 0 ; fi
