@@ -1,0 +1,65 @@
+name: gitleaks-scan
+on:
+  push:
+    branches:
+      - main
+env:
+  ARTIFACT_NAME: gitleaks-results
+  ARTIFACT_PATH: /tmp/gitleaks-results.json
+  
+jobs:
+  build:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+      - name: Run Gitleaks
+        run: |
+          bash -s << 'EOF'
+          TMPSARIF=$(mktemp).sarif
+          gitleaks detect -f sarif -r $TMPSARIF
+          jq .runs[0].results $TMPSARIF > $ARTIFACT_PATH
+        continue-on-error: true
+
+      - name: Compare Previous Gitleaks Results
+        run: |
+          bash -s << 'EOF'
+          PREV_ARTIFACTS=/tmp/artifacts.json
+          GITLEAKS_ARTIFACTS=/tmp/gitleaks-af.json
+          LAST_ARTIFACT_ZIP=/tmp/last-gitleaks-output.zip
+          curl -L -o $PREV_ARTIFACTS \
+          -H "Accept: application/vnd.github+json" \
+          -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          https://api.github.com/repos/${{ github.repository }}/actions/artifacts
+          jq '[ .artifacts[] | select(.name == "$ARTIFACT_NAME")]' $PREV_ARTIFACTS > $GITLEAKS_ARTIFACTS
+          LAST_A=$(jq '.[].created_at' $GITLEAKS_ARTIFACTS | sort -rV | head -n 1)
+          if [ -z $LAST_A ] ; then exit 0 ; fi
+          A_URL=$(jq '.artifacts[] | select(.created_at == '${LAST_A}') | .archive_download_url' $PREV_ARTIFACTS | tr -d '"')
+          if [ -z $A_URL ] ; then exit 0 ; fi
+          echo "fetching last gitleaks results:" $LAST_A $A_URL
+          curl -L -o $LAST_ARTIFACT_ZIP \
+          -H "Accept: application/vnd.github+json" \
+          -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          $A_URL
+          if [ -f $LAST_ARTIFACT_ZIP ]
+          then
+          mkdir /tmp/prev ; cd /tmp/prev
+          unzip $LAST_ARTIFACT_ZIP
+          PREV_FILENAME=$(cut -d / -f 3 <<< $ARTIFACT_PATH)
+          format_findings() { jq --compact-output '.[] | [.locations[0].physicalLocation.artifactLocation.uri , .locations[0].physicalLocation.region.snippet.text]' $1 ; }           
+          format_findings $PREV_FILENAME | sort | uniq > /tmp/results-prev
+          format_findings $ARTIFACT_PATH | sort | uniq > /tmp/results-current
+          diff $PREV_FILENAME $ARTIFACT_PATH
+          if [ $? ] ; then echo notify ; fi
+          fi
+          EOF
+        continue-on-error: true
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: $ARTIFACT_NAME
+          path: $ARTIFACT_PATH
+          
