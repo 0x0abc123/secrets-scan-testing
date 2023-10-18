@@ -21,6 +21,7 @@ jobs:
           jq .runs[0].results $TMPSARIF > $ARTIFACT_PATH
           ls -alh $ARTIFACT_PATH
           cat $ARTIFACT_PATH
+          EOF
         continue-on-error: true
 
       - name: Compare Previous Gitleaks Results
@@ -63,6 +64,6 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v2
         with:
-          name: $ARTIFACT_NAME
-          path: $ARTIFACT_PATH
+          name: ${{ env.ARTIFACT_NAME }}
+          path: ${{ env.ARTIFACT_PATH }}
           
