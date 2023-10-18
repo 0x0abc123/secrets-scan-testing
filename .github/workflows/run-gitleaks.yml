@@ -52,7 +52,8 @@ jobs:
           $A_URL
           if [ -f $LAST_ARTIFACT_ZIP ]
           then
-          mkdir /tmp/prev ; cd /tmp/prev
+          TMPDIR=$(mktemp -d)
+          cd $TMPDIR
           unzip $LAST_ARTIFACT_ZIP
           PREV_FILENAME=$(cut -d / -f 3 <<< $ARTIFACT_PATH)
           format_findings() { jq --compact-output '.[] | [.locations[0].physicalLocation.artifactLocation.uri , .locations[0].physicalLocation.region.snippet.text]' $1 ; }           
