@@ -58,7 +58,7 @@ jobs:
           format_findings() { jq --compact-output '.[] | [.locations[0].physicalLocation.artifactLocation.uri , .locations[0].physicalLocation.region.snippet.text]' $1 ; }           
           format_findings $PREV_FILENAME | sort | uniq > /tmp/results-prev
           format_findings $ARTIFACT_PATH | sort | uniq > /tmp/results-current
-          diff $PREV_FILENAME $ARTIFACT_PATH
+          diff /tmp/results-prev /tmp/results-current
           if [ $? ] ; then echo notify ; fi
           fi
           EOF
