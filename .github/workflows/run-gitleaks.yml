@@ -60,7 +60,8 @@ jobs:
           format_findings $PREV_FILENAME | sort | uniq > /tmp/results-prev
           format_findings $ARTIFACT_PATH | sort | uniq > /tmp/results-current
           diff /tmp/results-prev /tmp/results-current
-          if [ $? ] ; then echo notify ; fi
+          if [ $? ] ; then exit 0 ; fi
+          echo notify
           fi
           EOF
         continue-on-error: true
