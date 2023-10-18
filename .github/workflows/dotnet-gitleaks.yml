@@ -1,8 +1,28 @@
-name: hello-world2
-on: push
+name: run-gitleaks
+on:
+  push:
+    branches:
+      - main
 jobs:
-  my-job:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: my-step
-        run: echo "Hello World2!"
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+      - name: Run Local Gitleaks Binary
+        run: |
+          wget -O gitleaks.tar.gz https://github.com/zricethezav/gitleaks/releases/download/v8.15.2/gitleaks_8.15.2_linux_x64.tar.gz
+          tar -C /usr/local/bin -x -v -f gitleaks.tar.gz gitleaks
+          bash -s << 'EOF'
+          export TMPSARIF=$(mktemp).sarif
+          gitleaks detect -f sarif -r $TMPSARIF
+          jq .runs[0].results $TMPSARIF > /tmp/output.json
+          EOF
+        continue-on-error: true
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: outputjson
+          path: /tmp/output.json
+          artifact_name: gitleaks-output
